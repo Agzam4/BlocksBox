@@ -1,5 +1,5 @@
 # BlocksBox
-![](https://repository-images.githubusercontent.com/495957714/90491cdd-d6ed-462f-829d-8970e4ceb2bd)
+![](https://repository-images.githubusercontent.com/495957714/a5d797b6-fc6b-47c6-89f4-b5ce3481f989)
 ## Control:
 Move: `arrow keys`
 
