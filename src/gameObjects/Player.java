@@ -135,12 +135,16 @@ public class Player extends GameObject {
 
 	@Override
 	public void draw(Render render) {
-		Graphics2D g = render.getGraphics2D();
-
+		render.fillRect(
+				(int) ((x- render.getCamIX())*Block.BLOCKSIZE/Render.SCALE),
+				(int) ((y - render.getCamIY())*Block.BLOCKSIZE/Render.SCALE),
+				w*Block.BLOCKSIZE/Render.SCALE, h*Block.BLOCKSIZE/Render.SCALE,
+				255, 255, 255);
+		
 //		g.setColor(isGrounded ? Color.WHITE : Color.LIGHT_GRAY);
-		g.setColor(Color.WHITE);
-		g.fillRect((int) ((x- render.getCamIX())*Block.BLOCKSIZE),
-				(int) ((y - render.getCamIY())*Block.BLOCKSIZE), w*Block.BLOCKSIZE, h*Block.BLOCKSIZE);
+//		g.setColor(Color.WHITE);
+//		g.fillRect((int) ((x- render.getCamIX())*Block.BLOCKSIZE),
+//				(int) ((y - render.getCamIY())*Block.BLOCKSIZE), w*Block.BLOCKSIZE, h*Block.BLOCKSIZE);
 	}
 
 	private boolean isWall(int x, int y) {

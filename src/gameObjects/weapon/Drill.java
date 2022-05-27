@@ -62,7 +62,7 @@ public class Drill extends Weapon {
 		g.setColor(Color.BLACK);
 //		int radius = 25;
 //		
-		g.setStroke(new BasicStroke(d*Block.BLOCKSIZE*2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+		g.setStroke(new BasicStroke(d*Block.BLOCKSIZE*2/Render.SCALE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		g.drawLine(getStartX(render), getStartY(render), getEndX(render), getEndY(render));
 		g.setStroke(new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		
@@ -72,17 +72,17 @@ public class Drill extends Weapon {
 
 	
 	private int getStartX(Render render) {
-		return (int) (x - render.getCamX())*Block.BLOCKSIZE;
+		return (int) (x - render.getCamX())*Block.BLOCKSIZE/Render.SCALE;
 	}
 	private int getStartY(Render render) {
-		return (int) (y - render.getCamY())*Block.BLOCKSIZE;
+		return (int) (y - render.getCamY())*Block.BLOCKSIZE/Render.SCALE;
 	}
 
 	private int getEndX(Render render) {
-		return (int) (x - render.getCamX() + Math.cos(align)*size)*Block.BLOCKSIZE;
+		return (int) (x - render.getCamX() + Math.cos(align)*size)*Block.BLOCKSIZE/Render.SCALE;
 	}
 	private int getEndY(Render render) {
-		return (int) (y - render.getCamY() + Math.sin(align)*size)*Block.BLOCKSIZE;
+		return (int) (y - render.getCamY() + Math.sin(align)*size)*Block.BLOCKSIZE/Render.SCALE;
 	}
 	
 }

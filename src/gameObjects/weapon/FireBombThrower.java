@@ -1,12 +1,12 @@
 package gameObjects.weapon;
 
-public class BombThrower extends Weapon {
+public class FireBombThrower extends Weapon {
 
-	public BombThrower() {
+	public FireBombThrower() {
 		super(100);
 	}
 
-	int reloadTime = 25; // 25
+	int reloadTime = 50; // 25
 	int throwPower = 5; // 5
 	
 	int reload = 0;
@@ -17,7 +17,7 @@ public class BombThrower extends Weapon {
 		
 		if(game.isMousePressed) {
 			if(reload <= 0) {
-				Bomb bomb = new Bomb();
+				FireBomb bomb = new FireBomb();
 				bomb.setPosition(game.getPlayerBlockX(), game.getPlayerBlockY());
 				bomb.setVx(throwPower*Math.cos(game.mouseAlign));
 				bomb.setVy(throwPower*Math.sin(game.mouseAlign));
