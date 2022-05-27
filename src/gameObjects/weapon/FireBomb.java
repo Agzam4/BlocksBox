@@ -6,10 +6,10 @@ import java.awt.Graphics2D;
 import blocks.Block;
 import render.Render;
 
-public class Bomb extends Weapon {
+public class FireBomb extends Weapon {
 
-	public Bomb() {
-		super(500);
+	public FireBomb() {
+		super(400);
 	}
 
 	double px, py;
@@ -27,11 +27,13 @@ public class Bomb extends Weapon {
 			for (int xx = (int) (x-radius); xx < x+radius; xx++) {
 				double hypot = Math.hypot(x-xx, y-yy);
 				if(hypot < radius) {
-					if(game.isHardBlock((int) xx, (int) yy)) {
-						y -= vy;
-						vy = 0;
-						radialBoom((int) x, (int) y, 25, 10);
-						needDestroy = true;
+					if(game.isInArray((int) xx, (int) yy)) {
+						if(game.isHardBlock((int) xx, (int) yy) && !game.map[xx][yy].isBurned()) {
+							y -= vy;
+							vy = 0;
+							radialFireBoom((int) x, (int) y, 25, 10);
+							needDestroy = true;
+						}
 					}
 				}
 			}
@@ -43,10 +45,7 @@ public class Bomb extends Weapon {
 	@Override
 	public void draw(Render render) {
 		Graphics2D g = render.getGraphics2D();
-		g.setColor(Color.WHITE);
-//		render.fillOval((int) ((x-radius - render.getCamX())*Block.BLOCKSIZE),
-//				(int) ((y-radius - render.getCamY())*Block.BLOCKSIZE), radius*2*Block.BLOCKSIZE, 255, 255, 255);
-		
+		g.setColor(Color.RED);
 		g.fillOval((int) ((x-radius - render.getCamX())*Block.BLOCKSIZE/Render.SCALE),
 				(int) ((y-radius - render.getCamY())*Block.BLOCKSIZE/Render.SCALE), radius*2*Block.BLOCKSIZE/Render.SCALE, radius*2*Block.BLOCKSIZE/Render.SCALE);
 	}

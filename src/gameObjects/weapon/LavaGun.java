@@ -17,7 +17,9 @@ public class LavaGun extends BlockGun {
 		lava.setFire(250);
 		lava.setFireResistance(250);
 		lava.setMoveVector(throwPower*Math.cos(game.mouseAlign), throwPower*Math.sin(game.mouseAlign));
-		lava.setColor(Color.DARK_GRAY);
+//		lava.setFireBlock(true);
+		int gray = (int) (Math.random()*50);
+		lava.setColor(new Color(gray, gray, gray));
 		return lava;
 	}
 }

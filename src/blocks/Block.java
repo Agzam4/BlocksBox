@@ -40,6 +40,9 @@ public class Block {
 	
 	private boolean isBurned;
 	
+	private int lightR, lightG, lightB;
+	private boolean isLightBlock;
+	
 	public Block(int type, int hp) {
 		this.type = type;
 		this.hp = hp;
@@ -47,6 +50,27 @@ public class Block {
 		firehp = hp;
 		maxhp = hp;
 		directionX = Math.random() < .5 ? 1 : -1;
+	}
+	
+	public void setLightBlock(int r, int g, int b) {
+		lightR = r;
+		lightG = g;
+		lightB = b;
+	}
+	
+	public int getLightR() {
+		return lightR;
+	}
+	public int getLightG() {
+		return lightG;
+	}
+	public int getLightB() {
+		return lightB;
+	}
+	
+	public boolean isLightBlock() {
+		if(lightR + lightG + lightB > 0) return true; //  fireResistance < fire && (type == TYPE_FIXED_BLOCK || type == TYPE_FALL_BLOCK) && !isFireBlock
+		return isLightBlock;
 	}
 	
 	public void setTemperature(int temperature) {
@@ -111,6 +135,15 @@ public class Block {
 			if(hp <= 0) needDestroy = true;
 		}
 	}
+
+
+	public void fixDamage(int dmg) {
+		fixhp -= dmg;
+		if(fixhp <= 0) {
+			fixhp = 0;
+		}
+	}
+	
 	
 	public int getFire() {
 		return fire;
@@ -137,8 +170,9 @@ public class Block {
 	
 	public int acidDamage(int dmg) {
 		if(acidResistance < dmg) {
-			damage(dmg-acidResistance);
-			return dmg-acidResistance;
+			int admg = (dmg-acidResistance)/100;
+			damage(admg);
+			return admg;
 		}
 		return 0;
 	}
@@ -272,6 +306,9 @@ public class Block {
 			return;
 		}
 		
+		isMove = false;
+		
+//		if(type == TYPE_FIXED_BLOCK && fixhp > 0) return;
 		
 //		if(vx != 0) {
 //			if(vx > 0) {
@@ -286,23 +323,23 @@ public class Block {
 //			}
 //		}
 		
-//		if(canFallDown() && y < h-1) {
-//			Block block = map[x][y+1];
-//			if(block == null && newmap[x][y+1] == null) {
-//				newmap[x][y+1] = this;
-//				newmap[x][y] = null;
-//				unmovetime = 0;
-//				return;
-//			}
-//			if(block != null && (type == TYPE_FALL_BLOCK || isFallingFixedBlock()) && block.getType() == TYPE_FLUID_BLOCK) {
-//				newmap[x][y+1] = this;
-//				newmap[x][y] = block;
-//				map[x][y] = null;
-//				map[x][y+1] = null;
-//				unmovetime = 0;
-//				return;
-//			}
-//		}
+		if(canFallDown() && y < h-1) {
+			Block block = map[x][y+1];
+			if(block == null && newmap[x][y+1] == null) {
+				newmap[x][y+1] = this;
+				newmap[x][y] = null;
+				unmovetime = 0;
+				return;
+			}
+			if(block != null && (type == TYPE_FALL_BLOCK || isFallingFixedBlock()) && block.getType() == TYPE_FLUID_BLOCK) {
+				newmap[x][y+1] = this;
+				newmap[x][y] = block;
+				map[x][y] = null;
+				map[x][y+1] = null;
+				unmovetime = 0;
+				return;
+			}
+		}
 		if(type == TYPE_VOLATILE_BLOCK) {
 			color = new Color(
 					Math.min(255, defColor.getRed()+125),
@@ -433,59 +470,72 @@ public class Block {
 		
 	}
 	
+	public int getUnmovetime() {
+		return unmovetime;
+	}
+	
 	public void physicsUpdate(Block[][] map, Block[][] newmap, int x, int y, int w, int h, int uid) { // TODO
-		
+		if(isFireBlock) {
+
+			int r = (int) (fire);
+			if(r < 0) r = 0;
+			lightR = r*2;
+			lightG = r;
+			lightB = r/5;
+		}
 		
 		if(type == TYPE_FLUID_BLOCK && acid > 0) {
-			if(y < h - 1) {
-				if(map[x][y+1] != null && newmap[x][y+1] != null) {
-					int type = map[x][y+1].getType();
-					if(type == TYPE_FLUID_BLOCK && map[x][y+1].getAcid() < acid) { //  
-						int a = acid + map[x][y+1].getAcid();
-						map[x][y+1].setAcid(a/2);
-						acid = a - a/2;
-					} else if(type == TYPE_FIXED_BLOCK || type == TYPE_FALL_BLOCK) {
-						acid -= map[x][y+1].acidDamage(acid);
+			
+			boolean canDamage = true; // updateID%10 == 0;
+				if(y < h - 1) {
+					if(map[x][y+1] != null && newmap[x][y+1] != null) {
+						int type = map[x][y+1].getType();
+						if(type == TYPE_FLUID_BLOCK && map[x][y+1].getAcid() < acid) { //  
+							int a = acid + map[x][y+1].getAcid();
+							map[x][y+1].setAcid(a/2);
+							acid = a - a/2;
+						} else if(canDamage && type == TYPE_FIXED_BLOCK || type == TYPE_FALL_BLOCK) {
+							acid -= map[x][y+1].acidDamage(acid);
+						}
 					}
 				}
-			}
 
-			if(y > 0) {
-				if(map[x][y-1] != null && newmap[x][y-1] != null) {
-					int type = map[x][y-1].getType();
-					if(type == TYPE_FLUID_BLOCK && map[x][y-1].getAcid() < acid) {
-						int a = acid + map[x][y-1].getAcid();
-						map[x][y-1].setAcid(a/2);
-						acid = a - a/2;
+				if(y > 0) {
+					if(map[x][y-1] != null && newmap[x][y-1] != null) {
+						int type = map[x][y-1].getType();
+						if(type == TYPE_FLUID_BLOCK && map[x][y-1].getAcid() < acid) {
+							int a = acid + map[x][y-1].getAcid();
+							map[x][y-1].setAcid(a/2);
+							acid = a - a/2;
+						}
 					}
 				}
-			}
 
-			if(x < w - 1) {
-				if(map[x+1][y] != null && newmap[x+1][y] != null) {
-					int type = map[x+1][y].getType();
-					if(type == TYPE_FLUID_BLOCK && map[x+1][y].getAcid() < acid) { 
-						int a = acid + map[x+1][y].getAcid();
-						map[x+1][y].setAcid(a/2);
-						acid = a - a/2;
-					} else if(type == TYPE_FIXED_BLOCK || type == TYPE_FALL_BLOCK) {
-						acid -= map[x+1][y].acidDamage(acid);
+				if(x < w - 1) {
+					if(map[x+1][y] != null && newmap[x+1][y] != null) {
+						int type = map[x+1][y].getType();
+						if(type == TYPE_FLUID_BLOCK && map[x+1][y].getAcid() < acid) { 
+							int a = acid + map[x+1][y].getAcid();
+							map[x+1][y].setAcid(a/2);
+							acid = a - a/2;
+						} else if(canDamage && type == TYPE_FIXED_BLOCK || type == TYPE_FALL_BLOCK) {
+							acid -= map[x+1][y].acidDamage(acid);
+						}
 					}
 				}
-			}
 
-			if(x > 0) {
-				if(map[x-1][y] != null && newmap[x-1][y] != null) {
-					int type = map[x-1][y].getType();
-					if(type == TYPE_FLUID_BLOCK && map[x-1][y].getAcid() < acid) { 
-						int a = acid + map[x-1][y].getAcid();
-						map[x-1][y].setAcid(a/2);
-						acid = a - a/2;
-					} else if(type == TYPE_FIXED_BLOCK || type == TYPE_FALL_BLOCK) {
-						acid -= map[x-1][y].acidDamage(acid);
+				if(x > 0) {
+					if(map[x-1][y] != null && newmap[x-1][y] != null) {
+						int type = map[x-1][y].getType();
+						if(type == TYPE_FLUID_BLOCK && map[x-1][y].getAcid() < acid) { 
+							int a = acid + map[x-1][y].getAcid();
+							map[x-1][y].setAcid(a/2);
+							acid = a - a/2;
+						} else if(canDamage && type == TYPE_FIXED_BLOCK || type == TYPE_FALL_BLOCK) {
+							acid -= map[x-1][y].acidDamage(acid);
+						}
 					}
 				}
-			}
 			
 			
 			if(acid < 0) acid = 0;
@@ -493,6 +543,8 @@ public class Block {
 					Math.max(0, defColor.getRed()-acid),
 					Math.min(255,defColor.getGreen() + acid),
 					Math.max(0, defColor.getBlue()-acid));
+			
+			lightG = acid*3;
 		}
 		if(updateID != uid) {
 			if(isFireBlock) {
@@ -509,12 +561,11 @@ public class Block {
 				if(x > 0) {
 					Block b = newmap[x-1][y];
 					if(b != null) {
-						if(b.getType() == TYPE_FLUID_BLOCK && !b.isFireBlock() && fire > fireResistance) {
-							b.type = TYPE_VOLATILE_BLOCK;
+						if(b.getType() == TYPE_FLUID_BLOCK && !b.isFireBlock()) {
+							if(isFireBlock || b.fireResistance < fire) b.type = TYPE_VOLATILE_BLOCK;
 							fire = 0;
 							if(isFireBlock) {
-								type = TYPE_FIXED_BLOCK;
-								isFireBlock = false;
+								extinguish();
 							}
 						}else {
 							blendFire(b);
@@ -525,12 +576,11 @@ public class Block {
 				if(x < w-1) {
 					Block b = newmap[x+1][y];
 					if(b != null) {
-						if(b.getType() == TYPE_FLUID_BLOCK && !b.isFireBlock() && fire > fireResistance) {
-							b.type = TYPE_VOLATILE_BLOCK;
+						if(b.getType() == TYPE_FLUID_BLOCK && !b.isFireBlock()) {
+							if(isFireBlock || b.fireResistance < fire) b.type = TYPE_VOLATILE_BLOCK;
 							fire = 0;
 							if(isFireBlock) {
-								type = TYPE_FIXED_BLOCK;
-								isFireBlock = false;
+								extinguish();
 							}
 						}else {
 							blendFire(b);
@@ -541,12 +591,11 @@ public class Block {
 				if(y < h-1) {
 					Block b = newmap[x][y+1];
 					if(b != null) {
-						if(b.getType() == TYPE_FLUID_BLOCK && !b.isFireBlock() && fire > fireResistance) {
-							b.type = TYPE_VOLATILE_BLOCK;
+						if(b.getType() == TYPE_FLUID_BLOCK && !b.isFireBlock()) {
+							if(isFireBlock || b.fireResistance < fire) b.type = TYPE_VOLATILE_BLOCK;
 							fire = 0;
 							if(isFireBlock) {
-								type = TYPE_FIXED_BLOCK;
-								isFireBlock = false;
+								extinguish();
 							}
 						}else {
 							blendFire(b);
@@ -554,15 +603,14 @@ public class Block {
 //						b.updateID = uid;
 					}
 				}
-				if(y > 9) {
+				if(y > 0) {
 					Block b = newmap[x][y-1];
 					if(b != null) {
-						if(b.getType() == TYPE_FLUID_BLOCK && !b.isFireBlock() && fire > fireResistance) {
-							b.type = TYPE_VOLATILE_BLOCK;
+						if(b.getType() == TYPE_FLUID_BLOCK && !b.isFireBlock()) {
+							if(isFireBlock || b.fireResistance < fire) b.type = TYPE_VOLATILE_BLOCK;
 							fire = 0;
 							if(isFireBlock) {
-								type = TYPE_FIXED_BLOCK;
-								isFireBlock = false;
+								extinguish();
 							}
 						}else {
 							blendFire(b);
@@ -598,14 +646,21 @@ public class Block {
 					if(r > 255*5) r = 255*5;
 					if(r < 0) r = 0;
 					
-					color = new Color(
-					Math.min(255, Math.max(0, Math.max(defColor.getRed(), r*2))),
-					Math.min(255, Math.max(0, Math.max(defColor.getGreen(), r))),
-					Math.min(255, Math.max(0, Math.max(defColor.getBlue(), r/5))));
-					
+//					color = new Color(
+//					Math.min(255, Math.max(0, Math.max(defColor.getRed(), r*2))),
+//					Math.min(255, Math.max(0, Math.max(defColor.getGreen(), r))),
+//					Math.min(255, Math.max(0, Math.max(defColor.getBlue(), r/5))));
+					lightR = r*2;
+					lightG = r;
+					lightB = r/5;
 //					fire /= 2;
 				}else {
-					color = defColor;
+					if(acid <= 0 && !isFireBlock) {
+						color = defColor;
+						lightR = 0;
+						lightG = 0;
+						lightB = 0;
+					}
 				}
 				
 //				if(fire > fireResistance) {
@@ -624,6 +679,19 @@ public class Block {
 		
 	}
 	
+	private void extinguish() {
+		type = TYPE_FIXED_BLOCK;
+		maxfixhp = fixhp = hp = maxhp = hp/2;
+		isFireBlock = false;
+		lightR = 0;
+		lightG = 0;
+		lightB = 0;
+		color = defColor;
+		vx = 0;
+		vy = 0;
+		isMove = false;
+	}
+
 	private void blendFire(Block b) {
 		if(type == TYPE_FIXED_BLOCK || type == TYPE_FALL_BLOCK || type == TYPE_FLUID_BLOCK || isFireBlock) {
 			int f = b.getFire();
